@@ -10,6 +10,13 @@ A single class should have only one primary responsibility. A god object is anti
 
 The whole point of OCP is to be open for extension and closed for modification.
 
+<details>
+<summary>Example</summary>
+```
+// Hello world
+```
+</details>
+
 ### Liskov Substitution Principle (LSP)
 ### Interface Segregation Principle (ISP)
 ### Dependency Inversion Principle (DIP)
