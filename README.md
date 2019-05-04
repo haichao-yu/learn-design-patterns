@@ -12,9 +12,11 @@ The whole point of OCP is to be open for extension and closed for modification.
 
 <details>
 <summary>Example</summary>
+
+```java
+// Hello World
 ```
-// Hello world
-```
+
 </details>
 
 ### Liskov Substitution Principle (LSP)
