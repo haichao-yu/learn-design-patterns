@@ -21,4 +21,8 @@ The whole point of OCP is to be open for extension and closed for modification.
 
 ### Liskov Substitution Principle (LSP)
 ### Interface Segregation Principle (ISP)
+YAGNI = You Ain't Going to Need It
+
 ### Dependency Inversion Principle (DIP)
+1. High-level modules should not depend on low-level modules. Both should depend on abstraction.
+2. Abstractions should not depend on details. Details should depend on abstractions.
