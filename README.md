@@ -248,8 +248,7 @@ class BetterProductFilter implements Filter<Product> {
 class Rectangle {
     protected int width, height;
 
-    public Rectangle() {
-    }
+    public Rectangle() {}
 
     public Rectangle(int width, int height) {
         this.width = width;
@@ -283,8 +282,7 @@ class Rectangle {
 }
 
 class Square extends Rectangle {
-    public Square() {
-    }
+    public Square() {}
 
     public Square(int side) {
         width = height = side;
@@ -329,8 +327,7 @@ class Demo {
 class Rectangle {
     protected int width, height;
 
-    public Rectangle() {
-    }
+    public Rectangle() {}
 
     public Rectangle(int width, int height) {
         this.width = width;
@@ -384,8 +381,7 @@ class RectangleFactory {
 <summary>How to break it?</summary>
 
 ```java
-class Document {
-}
+class Document {}
 
 interface Machine {
     void print(Document d);
@@ -431,8 +427,7 @@ class OldFashionedPrinter implements Machine
 <summary>How to fix it?</summary>
 
 ```java
-class Document {
-}
+class Document {}
 
 interface Printer {
     void print(Document d) throws Exception;
@@ -462,8 +457,7 @@ class Photocopier implements Printer, Scanner {
     }
 }
 
-interface MultiFunctionDevice extends Printer, Scanner {
-}
+interface MultiFunctionDevice extends Printer, Scanner {}
 
 class MultiFunctionMachine implements MultiFunctionDevice {
     // compose this out of several modules
