@@ -526,13 +526,13 @@ class Person {
 class Relationships {  // low-level (related to data storage, no business logic)
     private List<Triplet<Person, Relationship, Person>> r;
 
+    public Relationships() {
+        this.r = new ArrayList<>();
+    }
+
     // major problem: exposed internal storage implementation as a public getter for everyone to access
     public List<Triplet<Person, Relationship, Person>> getRelationships() {
         return r;
-    }
-
-    public Relationships() {
-        this.r = new ArrayList<>();
     }
 
     public void addParentAndChild(Person parent, Person child) {
@@ -542,8 +542,7 @@ class Relationships {  // low-level (related to data storage, no business logic)
 }
 
 class Research {  // high-level
-    public Research() {
-    }
+    public Research() {}
 
     public void doResearch(Relationships relationships) {
         List<Triplet<Person, Relationship, Person>> r = relationships.getRelationships();
@@ -559,7 +558,6 @@ class Demo {
         Person child1 = new Person("Chris");
         Person child2 = new Person("Matt");
 
-        // low-level module
         Relationships relationships = new Relationships();
         relationships.addParentAndChild(parent, child1);
         relationships.addParentAndChild(parent, child2);
@@ -638,8 +636,7 @@ class Relationships implements RelationshipBrowser {  // low-level (related to d
 }
 
 class Research {  // high-level
-    public Research() {
-    }
+    public Research() {}
 
     public void doResearch(RelationshipBrowser browser) {
         List<Person> children = browser.findAllChildrenOf("John");
@@ -655,7 +652,6 @@ class Demo {
         Person child1 = new Person("Chris");
         Person child2 = new Person("Matt");
 
-        // low-level module
         Relationships relationships = new Relationships();
         relationships.addParentAndChild(parent, child1);
         relationships.addParentAndChild(parent, child2);
