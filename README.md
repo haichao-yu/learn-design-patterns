@@ -1,11 +1,49 @@
 # learn-design-patterns
 Some notes of "Design Patterns in Java" by Dmitri Nesteruk in Udemy
 
+## Index
+
+### SOLID Design Principles:
+- Single Responsibility Principle
+- Open-Closed Principle
+- Liskov Substitution Principle
+- Interface Segregation Principle
+- Dependency Inversion Principle
+
+### Creational Design Patterns:
+- Builder
+- Factories (Factory Method and Abstract Factory)
+- Prototype
+- Singleton
+
+### Structrural Design Patterns
+- Adapter
+- Bridge
+- Composite
+- Decorator
+- Façade
+- Flyweight
+- Proxy
+
+### Behavioral Design Patterns
+- Chain of Responsibility
+- Command
+- Interpreter
+- Iterator
+- Mediator
+- Memento
+- Null Object
+- Observer
+- State
+- Strategy
+- Template Method
+- Visitor
+
 ## SOLID Design Principles
 
 ### Single Responsibility Principle (SRP)
-* A class should only have one reason to change.
-* *Separation of concerns* - different classes handling different, independent tasks/problems.
+- A class should only have one reason to change.
+- *Separation of concerns* - different classes handling different, independent tasks/problems.
 
 <details>
 <summary>How to break it?</summary>
@@ -100,7 +138,7 @@ class Persistence {
 </details>
 
 ### Open-Closed Principle (OCP)
-* Classes should be open for extension but closed for modification.
+- Classes should be open for extension but closed for modification.
 
 <details>
 <summary>How to break it?</summary>
@@ -239,7 +277,7 @@ class BetterProductFilter implements Filter<Product> {
 </details>
 
 ### Liskov Substitution Principle (LSP)
-* You should be able to substitute a base type for a subtype.
+- You should be able to substitute a base type for a subtype.
 
 <details>
 <summary>How to break it?</summary>
@@ -374,8 +412,8 @@ class RectangleFactory {
 </details>
 
 ### Interface Segregation Principle (ISP)
-* Don't put too much into an interface; Split into separate interfaces.
-* *YAGNI* - You Ain't Going to Need It.
+- Don't put too much into an interface; Split into separate interfaces.
+- *YAGNI* - You Ain't Going to Need It.
 
 <details>
 <summary>How to break it?</summary>
@@ -482,8 +520,8 @@ class MultiFunctionMachine implements MultiFunctionDevice {
 </details>
 
 ### Dependency Inversion Principle (DIP)
-* High-level modules should not depend on low-level modules. Both should depend on abstraction.
-* Abstractions should not depend on details. Details should depend on abstractions.
+- High-level modules should not depend on low-level modules. Both should depend on abstraction.
+- Abstractions should not depend on details. Details should depend on abstractions.
 
 <details>
 <summary>How to break it?</summary>
