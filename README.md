@@ -55,7 +55,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-
 class Journal {
     private final List<String> entries = new ArrayList<>();
 
@@ -98,7 +97,6 @@ import java.io.PrintStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-
 
 class Journal {
     private final List<String> entries = new ArrayList<>();
@@ -714,7 +712,6 @@ class Demo {
 
 ```java
 import java.util.*;
-
 
 class MyField {
     private String name, type;
