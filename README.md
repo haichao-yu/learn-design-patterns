@@ -701,3 +701,258 @@ class Demo {
 ```
 
 </details>
+
+## Builder
+- When piecewise object construction is complicated, you can provide an API fo doing it succinctly.
+- A builder is a separate component for building an object.
+- You can either give builder a constructor or return it via a static function.
+- To make builder fluent, return `this`.
+- Different facets of an object can be built with different builders working in tandem via a base class.
+
+<details>
+<summary>Fluent Builder</summary>
+
+```java
+import java.util.*;
+
+
+class MyField {
+    private String name, type;
+
+    public MyField(String name, String type) {
+        this.name = name;
+        this.type = type;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("public %s %s;", type, name);
+    }
+}
+
+class MyClass {
+    private String className;
+    private List<MyField> fields;
+
+    public MyClass(String className) {
+        this.className = className;
+        this.fields = new ArrayList<>();
+    }
+
+    public void addField(MyField field) {
+        fields.add(field);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("public class ").append(className).append(" ").append("{").append(System.lineSeparator());
+        for (MyField field : fields) {
+            sb.append("    ").append(field).append(System.lineSeparator());
+        }
+        sb.append("}").append(System.lineSeparator());
+        return sb.toString();
+    }
+}
+
+class CodeBuilder {
+    private MyClass myClass;
+
+    public CodeBuilder(String className) {
+        myClass = new MyClass(className);
+    }
+
+    public CodeBuilder addField(String name, String type) {  // fluent
+        myClass.addField(new MyField(name, type));
+        return this;
+    }
+
+    @Override
+    public String toString() {
+        return myClass.toString();
+    }
+}
+
+class FluentBuilderDemo {
+    public static void main(String[] args) {
+        CodeBuilder cb = new CodeBuilder("Person")
+                .addField("name", "String")
+                .addField("age", "int");
+        System.out.println(cb);
+    }
+}
+```
+
+</details>
+
+<details>
+<summary>Fluent Builder Inheritance with Recursive Generics</summary>
+
+```java
+class Person {
+    public String name;
+    public String position;
+
+    @Override
+    public String toString() {
+        return "Person{name='" + name + "', position='" + position + "'}";
+    }
+}
+
+class PersonBuilder<SELF extends PersonBuilder<SELF>> {
+    protected Person person;
+
+    public PersonBuilder() {
+         person = new Person();
+    }
+
+    public SELF withName(String name) {
+        person.name = name;
+        // critical to return SELF here
+        return self();
+    }
+
+    protected SELF self() {
+        // unchecked cast, but actually safe
+        // proof: try sticking a non-PersonBuilder as SELF parameter, it won't work!
+        return (SELF) this;
+    }
+
+    public Person build() {
+        return person;
+    }
+}
+
+class EmployeeBuilder extends PersonBuilder<EmployeeBuilder> {
+    public EmployeeBuilder worksAs(String position) {
+        person.position = position;
+        return self();
+    }
+
+    @Override
+    protected EmployeeBuilder self() {
+        return this;
+    }
+}
+
+class RecursiveGenericsDemo {
+    public static void main(String[] args) {
+        PersonBuilder eb = new EmployeeBuilder()
+                .withName("Haichao")
+                .worksAs("Software Engineer");
+        System.out.println(eb.build());
+    }
+}
+```
+
+</details>
+
+<details>
+<summary>Faceted Builder</summary>
+
+```java
+class Person {
+    // address
+    public String streetAddress, postcode, city;
+
+    // employment
+    public String companyName, position;
+    public int annualIncome;
+
+    @Override
+    public String toString() {
+        return "Person{" +
+                "streetAddress='" + streetAddress + '\'' +
+                ", postcode='" + postcode + '\'' +
+                ", city='" + city + '\'' +
+                ", companyName='" + companyName + '\'' +
+                ", position='" + position + '\'' +
+                ", annualIncome=" + annualIncome +
+                '}';
+    }
+}
+
+class PersonBuilder {
+    protected Person person;
+
+    public PersonBuilder() {
+        person = new Person();
+    }
+
+    public PersonAddressBuilder lives() {
+        return new PersonAddressBuilder(person);
+    }
+
+    public PersonJobBuilder works() {
+        return new PersonJobBuilder(person);
+    }
+
+    public Person build() {
+        return person;
+    }
+}
+
+class PersonAddressBuilder extends PersonBuilder {
+    public PersonAddressBuilder(Person person) {
+        this.person = person;
+    }
+
+    public PersonAddressBuilder at(String streetAddress) {
+        person.streetAddress = streetAddress;
+        return this;
+    }
+
+    public PersonAddressBuilder withPostcode(String postcode) {
+        person.postcode = postcode;
+        return this;
+    }
+
+    public PersonAddressBuilder in(String city) {
+        person.city = city;
+        return this;
+    }
+}
+
+class PersonJobBuilder extends PersonBuilder {
+    public PersonJobBuilder(Person person) {
+        this.person = person;
+    }
+
+    public PersonJobBuilder at(String companyName) {
+        person.companyName = companyName;
+        return this;
+    }
+
+    public PersonJobBuilder asA(String position) {
+        person.position = position;
+        return this;
+    }
+
+    public PersonJobBuilder earning(int annualIncome) {
+        person.annualIncome = annualIncome;
+        return this;
+    }
+}
+
+class BuilderFacetsDemo {
+    public static void main(String[] args) {
+        PersonBuilder pb = new PersonBuilder();
+        Person person = pb
+                .lives()
+                .at("123 London Road")
+                .in("London")
+                .withPostcode("SW12BC")
+                .works()
+                .at("Fabrikam")
+                .asA("Engineer")
+                .earning(123000)
+                .build();
+        System.out.println(person);
+    }
+}
+```
+
+</details>
+
+### Java Recursive Generics
+Refer to https://www.sitepoint.com/self-types-with-javas-generics/
