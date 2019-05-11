@@ -1131,3 +1131,122 @@ class HotDrinkMachine {
 ```
 
 </details>
+
+## Prototype
+- A partially or fully initialized object that you copy (clone) and make use of.
+- Clone the prototype
+  * Implement your own deep copy functionality;
+  * Serialize and deserialize;
+- Customize the resulting instance;
+
+<details>
+<summary>Don't use cloneable</summary>
+
+```java
+class Address implements Cloneable {  // Cloneable is a marker interface
+    private String streetName;
+    private int houseNumber;
+
+    public Address(String streetName, int houseNumber) {
+        this.streetName = streetName;
+        this.houseNumber = houseNumber;
+    }
+
+    @Override
+    public Object clone() {  // base class clone() is protected
+        return new Address(streetName, houseNumber);  // deep copy
+    }
+}
+
+class Person implements Cloneable {
+    private String [] names;  // first name, middle name, last name
+    private Address address;
+
+    public Person(String[] names, Address address) {
+        this.names = names;
+        this.address = address;
+    }
+
+    @Override
+    public Object clone() {
+        return new Person(names.clone(), (Address) address.clone());  // deep copy
+    }
+}
+```
+
+</details>
+
+<details>
+<summary>Copy Constructor</summary>
+
+```java
+class Address {
+    private String streetAddress, city, country;
+
+    public Address(String streetAddress, String city, String country) {
+        this.streetAddress = streetAddress;
+        this.city = city;
+        this.country = country;
+    }
+
+    public Address(Address other) {  // copy constructor
+        this(other.streetAddress, other.city, other.country);
+    }
+}
+
+class Employee {
+    private String name;
+    private Address address;
+
+    public Employee(String name, Address address) {
+        this.name = name;
+        this.address = address;
+    }
+
+    public Employee(Employee other) {  // copy constructor
+        name = other.name;
+        address = new Address(other.address);
+    }
+}
+```
+
+</details>
+
+<details>
+<summary>Copy Through Serialization</summary>
+
+```java
+import java.io.Serializable;
+import org.apache.commons.lang3.SerializationUtils;
+
+class Foo implements Serializable {
+    public int stuff;
+    public String whatever;
+
+    public Foo(int stuff, String whatever) {
+        this.stuff = stuff;
+        this.whatever = whatever;
+    }
+
+    @Override
+    public String toString() {
+        return "Foo{stuff=" + stuff + ", whatever='" + whatever + '}';
+    }
+}
+
+class CopyThroughSerializationDemo {
+    public static void main(String[] args) {
+        Foo foo = new Foo(42, "life");
+
+        // use apache commons!
+        Foo foo2 = SerializationUtils.roundtrip(foo);  // roundtrip: serialize and deserialize
+
+        foo2.whatever = "xyz";
+
+        System.out.println(foo);
+        System.out.println(foo2);
+    }
+}
+```
+
+</details>
