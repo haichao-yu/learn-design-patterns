@@ -1250,3 +1250,183 @@ class CopyThroughSerializationDemo {
 ```
 
 </details>
+
+## Singleton
+- A singleton is a component which is instantiated only once.
+- Singletons are difficult to test.
+- Follow the Dependency Inversion Principle: Instead of depending on a concrete implementation of a singleton, consider depending on an abstraction (e.g., an interface).
+- Consider defining singleton lifetime in a Dependency Injection container.
+
+<details>
+<summary>Basic Singleton</summary>
+
+```java
+class BasicSingleton implements Serializable {
+    
+    // You cannot new this class, however:
+    // - Instance can be created deliberately (reflection);
+    // - Instance can be created accidentally (serialization);
+    private BasicSingleton() {
+        System.out.println("Initializing a basic singleton");
+    }
+
+    private static final BasicSingleton INSTANCE = new BasicSingleton();
+
+    public static BasicSingleton getInstance() {
+        return INSTANCE;
+    }
+
+    // Required for correct serialization (readResolve is used for _replacing_ the object read from the stream)
+    protected Object readResolve() {
+        return INSTANCE;
+    }
+}
+```
+
+</details>
+
+<details>
+<summary>Static Block Singleton</summary>
+
+```java
+class StaticBlockSingleton {
+
+    private static StaticBlockSingleton instance;
+
+    private StaticBlockSingleton() {
+        System.out.println("Initializing a Static Block Singleton");
+    }
+
+    //static block initialization for exception handling
+    static {
+        try {
+            instance = new StaticBlockSingleton();
+        } catch(Exception e) {
+            throw new RuntimeException("Exception occured in creating singleton instance");
+        }
+    }
+
+    public static StaticBlockSingleton getInstance() {
+        return instance;
+    }
+}
+```
+
+</details>
+
+<details>
+<summary>Singleton with Laziness and Thread Safety</summary>
+
+```java
+class LazySingleton {
+
+    private static LazySingleton instance;
+
+    private LazySingleton() {
+        System.out.println("Initializing a singleton with laziness and thread safety");
+    }
+
+    // Correct but possibly expensive multi-threaded version
+    public static synchronized LazySingleton getInstance() {
+        if (instance == null) {
+            instance = new LazySingleton();
+        }
+        return instance;
+    }
+
+    // Double-Checked Locking (https://en.wikipedia.org/wiki/Double-checked_locking#Usage_in_Java)
+    public static LazySingleton getInstance_DoubleCheckedLocking() {
+        if (instance == null) {
+            synchronized (LazySingleton.class) {
+                if (instance == null) {
+                    instance = new LazySingleton();
+                }
+            }
+        }
+        return instance;
+    }
+}
+```
+
+</details>
+
+<details>
+<summary>Bill Pugh Singleton (Inner Static Singleton)</summary>
+
+```java
+class BillPughSingleton {
+
+    /**
+     * This is called the initialization-on-demand holder idiom.
+     * In Java, encapsulating classes do not automatically initialize inner classes.
+     * So the inner class only gets initialized by getInstance().
+     * Then again, class initialization is guaranteed to be sequential in Java, so the JVM implicitly renders it thread-safe.
+     */
+
+    private BillPughSingleton() {
+        System.out.println("Initializing an Bill Pugh Singleton");
+    }
+
+    public static class Impl {
+        private static final BillPughSingleton INSTANCE = new BillPughSingleton();
+    }
+
+    public static BillPughSingleton getInstance() {
+        return Impl.INSTANCE;
+    }
+}
+```
+
+</details>
+
+<details>
+<summary>Enum-based Singleton</summary>
+
+```java
+enum EnumBasedSingleton {
+
+    INSTANCE;
+
+    public static void doSomething(){
+        //do something
+    }
+}
+```
+
+</details>
+
+<details>
+<summary>Multiton</summary>
+
+```java
+import java.util.HashMap;
+
+enum Subsystem {
+    PRIMARY,
+    AUXILIARY,
+    FALLBACK
+}
+
+class Printer {  // Multiton contains a finite set of instances
+    private static int instanceCount = 0;
+
+    private Printer() {
+        instanceCount++;
+        System.out.println("A total of " + instanceCount + " instances created so far.");
+    }
+
+    private static HashMap<Subsystem, Printer> instances = new HashMap<>();
+
+    public static Printer get(Subsystem ss) {
+        if (instances.containsKey(ss)) {
+            return instances.get(ss);
+        }
+
+        Printer instance = new Printer();
+        instances.put(ss, instance);
+        return instance;
+    }
+}
+```
+
+</details>
