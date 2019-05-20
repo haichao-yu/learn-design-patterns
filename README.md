@@ -1133,11 +1133,10 @@ class HotDrinkMachine {
 </details>
 
 ## Prototype
-- A partially or fully initialized object that you copy (clone) and make use of.
-- Clone the prototype
+- Prototype is a partially or fully initialized object that you copy (clone) and make use of.
+- Clone the prototype:
   * Implement your own deep copy functionality;
   * Serialize and deserialize;
-- Customize the resulting instance;
 
 <details>
 <summary>Don't use cloneable</summary>
@@ -1425,6 +1424,158 @@ class Printer {  // Multiton contains a finite set of instances
         Printer instance = new Printer();
         instances.put(ss, instance);
         return instance;
+    }
+}
+```
+
+</details>
+
+## Adaptor
+- Adaptor is a construct which adapts an existing interface X to conform to the required interface Y.
+- Intermediate representations can pile up: use caching and other optimizations.
+
+<details>
+<summary>Adaptor without Cache</summary>
+
+```java
+import java.util.ArrayList;
+
+class Point {
+    public int x, y;
+
+    public Point(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
+}
+
+class Line {
+    public Point start, end;
+
+    public Line(Point start, Point end) {
+        this.start = start;
+        this.end = end;
+    }
+}
+
+class LineToPointAdapter extends ArrayList<Point> {
+    public LineToPointAdapter(Line line) {
+        int left = Math.min(line.start.x, line.end.x);
+        int right = Math.max(line.start.x, line.end.x);
+        int top = Math.min(line.start.y, line.end.y);
+        int bottom = Math.max(line.start.y, line.end.y);
+        int dx = right - left;
+        int dy = bottom - top;
+
+        // For simplicity, here we only consider lines which are vertical and horizontal
+        if (dx == 0) {
+            for (int y = top; y <= bottom; ++y) {
+                add(new Point(left, y));
+            }
+        }
+        else if (dy == 0) {
+            for (int x = left; x <= right; ++x) {
+                add(new Point(x, top));
+            }
+        }
+    }
+}
+```
+
+</details>
+
+<details>
+<summary>Adaptor with Cache</summary>
+
+```java
+import java.util.*;
+import java.util.function.Consumer;
+
+class Point {
+    public int x, y;
+
+    public Point(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        // implementation omitted
+    }
+
+    @Override
+    public int hashCode() {
+        // implementation omitted
+    }
+}
+
+class Line {
+    public Point start, end;
+
+    public Line(Point start, Point end) {
+        this.start = start;
+        this.end = end;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        // implementation omitted
+    }
+
+    @Override
+    public int hashCode() {
+        // implementation omitted
+    }
+}
+
+class LineToPointAdapter implements Iterable<Point> {
+    private static Map<Line, List<Point>> cache = new HashMap<>();
+    
+    private Line line;
+
+    public LineToPointAdapter(Line line) {
+        if (cache.get(line) != null) {
+            return;
+        }
+
+        this.line = line;
+        List<Point> points = new ArrayList<>();
+
+        int left = Math.min(line.start.x, line.end.x);
+        int right = Math.max(line.start.x, line.end.x);
+        int top = Math.min(line.start.y, line.end.y);
+        int bottom = Math.max(line.start.y, line.end.y);
+        int dx = right - left;
+        int dy = bottom - top;
+
+        if (dx == 0) {
+            for (int y = top; y <= bottom; ++y) {
+                points.add(new Point(left, y));
+            }
+        }
+        else if (dy == 0) {
+            for (int x = left; x <= right; ++x) {
+                points.add(new Point(x, top));
+            }
+        }
+
+        cache.put(line, points);
+    }
+
+    @Override
+    public Iterator<Point> iterator() {
+        return cache.get(line).iterator();
+    }
+
+    @Override
+    public void forEach(Consumer<? super Point> action) {
+        cache.get(line).forEach(action);
+    }
+
+    @Override
+    public Spliterator<Point> spliterator() {
+        return cache.get(line).spliterator();
     }
 }
 ```
