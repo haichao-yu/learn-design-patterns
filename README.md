@@ -1251,7 +1251,7 @@ class CopyThroughSerializationDemo {
 </details>
 
 ## Singleton
-- A singleton is a component which is instantiated only once.
+- Singleton is a component which is instantiated only once.
 - Singletons are difficult to test.
 - Follow the Dependency Inversion Principle: Instead of depending on a concrete implementation of a singleton, consider depending on an abstraction (e.g., an interface).
 - Consider defining singleton lifetime in a Dependency Injection container.
@@ -1580,4 +1580,127 @@ class LineToPointAdapter implements Iterable<Point> {
 }
 ```
 
+</details>
+
+## Bridge
+- Bridge is a mechanism that decouples abstraction (hierarchy) from implementation (hierarchy).
+
+<details>
+<summary>Cartesian-Product Duplication</summary>
+
+```java
+/**
+ * Shape -> Triangle, Shape
+ * Rendering -> Vector, Raster
+ */
+
+abstract class Shape {
+    public abstract String getName();
+}
+
+class Triangle extends Shape {
+    @Override
+    public String getName() {
+        return "Triangle";
+    }
+}
+
+class Square extends Shape {
+    @Override
+    public String getName() {
+        return "Square";
+    }
+}
+
+/**
+ * Cartesian product complexity explosion: 2 * 2 = 4
+ */
+class VectorTriangle extends Triangle {
+    public void draw() {
+        System.out.println(String.format("Drawing %s as lines", getName()));
+    }
+}
+
+class RasterTriangle extends Triangle {
+    public void draw() {
+        System.out.println(String.format("Drawing %s as pixels", getName()));
+    }
+}
+
+class VectorSquare extends Square {
+    public void draw() {
+        System.out.println(String.format("Drawing %s as lines", getName()));
+    }
+}
+
+class RasterSquare extends Square {
+    public void draw() {
+        System.out.println(String.format("Drawing %s as pixels", getName()));
+    }
+}
+```
+</details>
+
+<details>
+<summary>Bridge Pattern</summary>
+
+```java
+interface Renderer {
+    public String whatToRenderAs();
+}
+
+class VectorRenderer implements Renderer {
+    @Override
+    public String whatToRenderAs() {
+        return "lines";
+    }
+}
+
+class RasterRenderer implements Renderer {
+    @Override
+    public String whatToRenderAs() {
+        return "pixels";
+    }
+}
+
+abstract class Shape {
+    private Renderer renderer;
+    public String name;
+
+    public Shape(Renderer renderer) {
+        this.renderer = renderer;
+    }
+
+    public void draw() {
+        System.out.println(String.format("Drawing %s as %s", name, renderer.whatToRenderAs()));
+    }
+}
+
+class Triangle extends Shape {
+    public Triangle(Renderer renderer) {
+        super(renderer);
+        name = "Triangle";
+    }
+}
+
+class Square extends Shape {
+    public Square(Renderer renderer) {
+        super(renderer);
+        name = "Square";
+    }
+}
+
+class Demo {
+    public static void main(String[] args) {
+        Shape vectorTriangle = new Triangle(new VectorRenderer());
+        vectorTriangle.draw();
+        Shape rasterTriangle = new Triangle(new RasterRenderer());
+        rasterTriangle.draw();
+        Shape vectorSquare = new Square(new VectorRenderer());
+        vectorSquare.draw();
+        Shape rasterSquare = new Square(new RasterRenderer());
+        rasterSquare.draw();
+    }
+}
+```
 </details>
