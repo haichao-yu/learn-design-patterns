@@ -702,7 +702,7 @@ class Demo {
 
 ## Builder
 - When piecewise object construction is complicated, you can provide an API fo doing it succinctly.
-- A builder is a separate component for building an object.
+- Builder is a separate component for building an object.
 - You can either give builder a constructor or return it via a static function.
 - To make builder fluent, return `this`.
 - Different facets of an object can be built with different builders working in tandem via a base class.
@@ -955,7 +955,7 @@ class BuilderFacetsDemo {
 Refer to https://www.sitepoint.com/self-types-with-javas-generics/
 
 ## Factory
-- A factory is a component responsible solely for the wholesale (not piecewise) creation of objects.
+- Factory is a component responsible solely for the wholesale (not piecewise) creation of objects.
 - A factory method is a static method that creates objects.
 - A factory class can take care of object creation.
 - A factory can be external or reside inside the object as an inner class.
@@ -1703,4 +1703,79 @@ class Demo {
     }
 }
 ```
+</details>
+
+## Composition
+- Composition is a mechanism for treating individual (scalar) objects and compositions of objects in a uniform manner.
+
+<details>
+<summary>Composition Pattern: Neural Networks</summary>
+
+```java
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Spliterator;
+import java.util.function.Consumer;
+
+interface SomeNeurons extends Iterable<Neuron> {
+    default void connectTo(SomeNeurons other) {
+        if (this == other) return;
+
+        for (Neuron from : this) {
+            for (Neuron to : other) {
+                from.out.add(to);
+                to.in.add(from);
+            }
+        }
+    }
+}
+
+// Object
+class Neuron implements SomeNeurons {
+
+    public List<Neuron> in, out;
+
+    public Neuron() {
+        this.in = new ArrayList<>();
+        this.out = new ArrayList<>();
+    }
+
+    @Override
+    public Iterator<Neuron> iterator() {
+        return Collections.singleton(this).iterator();
+    }
+
+    @Override
+    public void forEach(Consumer<? super Neuron> action) {
+        action.accept(this);
+    }
+
+    @Override
+    public Spliterator<Neuron> spliterator() {
+        return Collections.singleton(this).spliterator();
+    }
+}
+
+// Composition of objects (neuron layer contains multiple neuron)
+class NeuronLayer extends ArrayList<Neuron> implements SomeNeurons {
+}
+
+class NeuralNetworksDemo {
+    public static void main(String[] args) {
+        Neuron neuron = new Neuron();
+        Neuron neuron2 = new Neuron();
+        NeuronLayer layer = new NeuronLayer();
+        NeuronLayer layer2 = new NeuronLayer();
+
+        // Composition Pattern: object and composition of objects are treated in a uniform manner
+        neuron.connectTo(neuron2);
+        neuron.connectTo(layer);
+        layer.connectTo(neuron);
+        layer.connectTo(layer2);
+    }
+}
+```
+
 </details>
