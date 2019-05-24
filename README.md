@@ -1882,3 +1882,62 @@ class Demo {
 ```
 
 </details>
+
+## Façade
+- The Façade design pattern is all about providing a simple, easy to understand user interface over a large and sophisticated body of code.
+- Build a Façade to provide simplified APIs over a set of classes.
+- May wish to (optionally) expose internals through the Façade.
+- May allow users to "escalate" to use more complex APIs if they need to.
+
+<details>
+<summary>Façade Example</summary>
+
+```java
+/* Complex parts */
+
+class CPU {
+    public void freeze() { ... }
+    public void jump(long position) { ... }
+    public void execute() { ... }
+}
+
+class HardDrive {
+    public byte[] read(long lba, int size) { ... }
+}
+
+class Memory {
+    public void load(long position, byte[] data) { ... }
+}
+
+/* Facade */
+
+class ComputerFacade {
+    private final CPU processor;
+    private final Memory ram;
+    private final HardDrive hd;
+
+    public ComputerFacade() {
+        this.processor = new CPU();
+        this.ram = new Memory();
+        this.hd = new HardDrive();
+    }
+
+    public void start() {
+        processor.freeze();
+        ram.load(BOOT_ADDRESS, hd.read(BOOT_SECTOR, SECTOR_SIZE));
+        processor.jump(BOOT_ADDRESS);
+        processor.execute();
+    }
+}
+
+/* Client */
+
+class You {
+    public static void main(String[] args) {
+        ComputerFacade computer = new ComputerFacade();
+        computer.start();
+    }
+}
+```
+
+</details>
