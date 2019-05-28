@@ -2024,3 +2024,193 @@ class FlyweightExample {
 ```
 
 </details>
+
+## Proxy
+- Proxy is a class that functions as an interface to a particular resource. That resource may be remote, expensive to construct, or may require logging or some other added functionality.
+- A proxy has the same interface as the underlying object.
+- To create a proxy, you can simply replicate the existing interface of an object.
+- It allows to add relevant functionality to the redefined member functions.
+
+<details>
+<summary>Protection Proxy</summary>
+
+```java
+// Protection Proxy controls access to particular resource while offering the same API.
+
+interface Drivable {
+    void drive();
+}
+
+class Car implements Drivable {
+    protected Driver driver;
+
+    public Car(Driver driver) {
+        this.driver = driver;
+    }
+
+    @Override
+    public void drive() {
+        System.out.println("Car being driven");
+    }
+}
+
+class Driver {
+    private int age;
+
+    public Driver(int age) {
+        this.age = age;
+    }
+
+    public int getAge() {
+        return age;
+    }
+}
+
+// CarProxy behaves every way as a car but it actually verify that the driver is old enough to drive.
+class CarProxy extends Car {
+    public CarProxy(Driver driver) {
+        super(driver);
+    }
+
+    @Override
+    public void drive() {
+        if (driver.getAge() > 16) {
+            super.drive();
+        }
+        else {
+            System.out.println("Driver is too young");
+        }
+    }
+}
+
+class Demo {
+    public static void main(String[] args) {
+        Car car = new CarProxy(new Driver(12));
+        car.drive();
+    }
+}
+```
+
+</details>
+
+<details>
+<summary>Property Proxy</summary>
+
+```java
+// Property Proxy is an idea of replacing a field with something which forces you to perform some kind of checks (e.g., logging).
+
+class Property<T> {
+    private T value;
+
+    public Property(T value) {
+        this.value = value;
+    }
+
+    public T getValue() {
+        // You can do logging here.
+        return value;
+    }
+
+    public void setValue(T value) {
+        // You can do logging here.
+        this.value = value;
+    }
+}
+
+class Creature {
+    private Property<Integer> agility;
+
+    public Creature(int agility) {
+        this.agility = new Property<>(agility);
+    }
+
+    public int getAgility() {
+        return agility.getValue();
+    }
+
+    public void setAgility(int agility) {
+        this.agility.setValue(agility);
+    }
+}
+```
+
+</details>
+
+<details>
+<summary>Dynamic Proxy for Logging</summary>
+
+```java
+// Dynamic Proxy is a proxy which is constructed at runtime as opposed to compile time.
+
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import java.util.HashMap;
+import java.util.Map;
+
+interface Human {
+    void walk();
+    void talk();
+}
+
+class Person implements Human {
+    @Override
+    public void walk() {
+        System.out.println("I am walking.");
+    }
+
+    @Override
+    public void talk() {
+        System.out.println("I am talking.");
+    }
+}
+
+class LoggingHandler implements InvocationHandler {
+    private Object target;
+    private Map<String, Integer> calls;
+
+    public LoggingHandler(Object target) {
+        this.target = target;
+        calls = new HashMap<>();
+    }
+    
+    // intercept the invocation of every single method
+    @Override
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+
+        // before invocation you can perform additional process
+        String name = method.getName();
+
+        if (name.contains("toString")) {
+            return calls.toString();
+        }
+
+        calls.put(name, calls.getOrDefault(name, 0) + 1);
+
+        // actual invocation
+        return method.invoke(target, args);
+    }
+}
+
+class Demo {
+    @SuppressWarnings("unchecked")
+    public static <T> T withLogging(T target, Class<T> myClass) {
+        return (T) Proxy.newProxyInstance(
+                myClass.getClassLoader(),
+                new Class<?>[] { myClass },
+                new LoggingHandler(target)
+        );
+    }
+
+    public static void main(String[] args) {
+        Person person = new Person();
+        Human logged = withLogging(person, Human.class);
+        logged.talk();
+        logged.walk();
+        logged.walk();
+        System.out.println(logged);
+    }
+}
+```
+
+</details>
