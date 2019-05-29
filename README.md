@@ -2214,3 +2214,255 @@ class Demo {
 ```
 
 </details>
+
+## Chain of Responsibility
+- A chain of components who all get a chance to process a command or a query, optionally having default processing implementation and an ability to terminate the processing chain.
+- Command-Query Separation: every method should either be a command that performs an action, or a query that returns data to the caller, but not both.
+
+<details>
+<summary>Method Chain</summary>
+
+```java
+class Creature {
+    public String name;
+    public int offense, defense;
+
+    public Creature(String name, int offense, int defense) {
+        this.name = name;
+        this.offense = offense;
+        this.defense = defense;
+    }
+
+    @Override
+    public String toString() {
+        return "Creature{name='" + name + "', offense=" + offense + ", defense=" + defense + "}";
+    }
+}
+
+class CreatureModifier {
+    protected Creature creature;
+    protected CreatureModifier next;
+
+    public CreatureModifier(Creature creature) {
+        this.creature = creature;
+    }
+
+    public void add(CreatureModifier cm) {
+        if (next != null) {
+            next.add(cm);
+        }
+        else {
+            next = cm;
+        }
+    }
+
+    public void handle() {
+        if (next != null) {
+            next.handle();
+        }
+    }
+}
+
+class DoubleOffenseModifier extends CreatureModifier {
+    public DoubleOffenseModifier(Creature creature) {
+        super(creature);
+    }
+
+    @Override
+    public void handle() {
+        creature.offense *= 2;
+        super.handle();
+    }
+}
+
+class IncreaseDefenseModifier extends CreatureModifier {
+    public IncreaseDefenseModifier(Creature creature) {
+        super(creature);
+    }
+
+    @Override
+    public void handle() {
+        creature.defense += 3;
+        super.handle();
+    }
+}
+
+class NoBonusesModifier extends CreatureModifier {
+    public NoBonusesModifier(Creature creature) {
+        super(creature);
+    }
+
+    @Override
+    public void handle() {
+        // do nothing
+    }
+}
+
+class Demo {
+    public static void main(String[] args) {
+        Creature goblin = new Creature("goblin", 2, 2);
+        System.out.println(goblin);
+
+        CreatureModifier root = new CreatureModifier(goblin);  // dummy root
+        // root.add(new NoBonusesModifier(goblin));
+        root.add(new DoubleOffenseModifier(goblin));
+        root.add(new IncreaseDefenseModifier(goblin));
+        root.handle();
+        System.out.println(goblin);
+    }
+}
+```
+
+</details>
+
+<details>
+<summary>Broker Chain (Hard to understand)</summary>
+
+```java
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Consumer;
+
+class Event<Args> {
+    private int index;
+    private Map<Integer, Consumer<Args>> handlers;
+
+    public Event() {
+        index = 0;
+        handlers = new HashMap<>();
+    }
+
+    public int subscribe(Consumer<Args> handler) {
+        int i = index;
+        handlers.put(index++, handler);
+        return i;
+    }
+
+    public void unsubscribe(int key) {
+        handlers.remove(key);
+    }
+
+    public void fire(Args args) {
+        for (Consumer<Args> handler : handlers.values()) {
+            handler.accept(args);
+        }
+    }
+}
+
+enum Property {
+    OFFENSE, DEFENSE
+}
+
+class Query {
+    public String creatureName;
+    public Property property;
+    public int value;
+
+    public Query(String creatureName, Property property, int value) {
+        this.creatureName = creatureName;
+        this.property = property;
+        this.value = value;
+    }
+}
+
+class Game {  // mediator
+    public Event<Query> queries;
+
+    public Game() {
+        queries = new Event<>();
+    }
+}
+
+class Creature {
+    private Game game;
+    public String name;
+    private int baseOffense, baseDefense;
+
+    public Creature(Game game, String name, int baseOffense, int baseDefense) {
+        this.game = game;
+        this.baseOffense = baseOffense;
+        this.baseDefense = baseDefense;
+        this.name = name;
+    }
+
+    int getOffense() {
+        Query q = new Query(name, Property.OFFENSE, baseOffense);
+        game.queries.fire(q);
+        return q.value;
+    }
+
+    int getDefense() {
+        Query q = new Query(name, Property.DEFENSE, baseDefense);
+        game.queries.fire(q);
+        return q.value;
+    }
+
+    @Override
+    public String toString() {
+        return "Creature{name='" + name + "', offense=" + getOffense() + ", defense=" + getDefense() + "}";
+    }
+}
+
+class CreatureModifier {  // protected, not private!
+    protected Game game;
+    protected Creature creature;
+
+    public CreatureModifier(Game game, Creature creature) {
+        this.game = game;
+        this.creature = creature;
+    }
+}
+
+class IncreasedDefenseModifier extends CreatureModifier {
+
+    public IncreasedDefenseModifier(Game game, Creature creature) {
+        super(game, creature);
+
+        game.queries.subscribe(q -> {
+            if (q.creatureName.equals(creature.name) && q.property == Property.DEFENSE) {
+                q.value += 3;
+            }
+        });
+    }
+}
+
+class DoubleOffenseModifier extends CreatureModifier implements AutoCloseable {
+
+    private int token;
+
+    public DoubleOffenseModifier(Game game, Creature creature) {
+        super(game, creature);
+
+        token = game.queries.subscribe(q -> {
+            if (q.creatureName.equals(creature.name) && q.property == Property.OFFENSE) {
+                q.value *= 2;
+            }
+        });
+    }
+
+    @Override
+    public void close() /*throws Exception*/ {
+        game.queries.unsubscribe(token);
+    }
+}
+
+class BrokerChainDemo {
+    public static void main(String[] args) {
+        Game game = new Game();
+        Creature goblin = new Creature(game, "Strong Goblin", 2, 2);
+
+        System.out.println(goblin);
+
+        // modifiers can be piled up
+        IncreasedDefenseModifier icm = new IncreasedDefenseModifier(game, goblin);
+        System.out.println(goblin);
+
+        try (DoubleOffenseModifier dom = new DoubleOffenseModifier(game, goblin)) {
+            System.out.println(goblin);
+        }
+        System.out.println(goblin);
+    }
+}
+```
+
+</details>
