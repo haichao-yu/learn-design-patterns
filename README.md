@@ -2466,3 +2466,115 @@ class BrokerChainDemo {
 ```
 
 </details>
+
+## Command
+- Command is an object which represents an instruction to perform a particular action. It contains all the information necessary for the action to be taken.
+
+<details>
+<summary>Command: Undo Operation</summary>
+
+```java
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+class BankAccount {
+    private int balance;
+    private final int overdraftLimit = -500;
+
+    public void deposit(int amount) {
+        balance += amount;
+    }
+
+    public boolean withdraw(int amount) {
+        if (balance - amount >= overdraftLimit) {
+            balance -= amount;
+            return true;
+        }
+        return false;  // cannot withdraw
+    }
+
+    @Override
+    public String toString() {
+        return "BankAccount{balance=" + balance + "}";
+    }
+}
+
+enum Action {
+    DEPOSIT, WITHDRAW
+}
+
+interface Command {
+    void call();
+    void undo();
+}
+
+class BankAccountCommand implements Command {
+
+    private BankAccount bankAccount;
+    private Action action;
+    private int amount;
+
+    private boolean isCommandSucceeded;
+
+    public BankAccountCommand(BankAccount bankAccount, Action action, int amount) {
+        this.bankAccount = bankAccount;
+        this.action = action;
+        this.amount = amount;
+    }
+
+    @Override
+    public void call() {
+        switch (action) {
+            case DEPOSIT:
+                bankAccount.deposit(amount);
+                isCommandSucceeded = true;
+                break;
+            case WITHDRAW:
+                isCommandSucceeded = bankAccount.withdraw(amount);
+                break;
+        }
+    }
+
+    @Override
+    public void undo() {  // assume it's only executed after call()
+        if (!isCommandSucceeded) {
+            return;
+        }
+
+        switch (action) {
+            case DEPOSIT:
+                bankAccount.withdraw(amount);
+                break;
+            case WITHDRAW:
+                bankAccount.deposit(amount);
+                break;
+        }
+    }
+}
+
+class Demo {
+    public static void main(String[] args) {
+        BankAccount bankAccount = new BankAccount();
+        System.out.println(bankAccount);
+
+        List<Command> commands = new ArrayList<>();
+        commands.add(new BankAccountCommand(bankAccount, Action.DEPOSIT, 100));
+        commands.add(new BankAccountCommand(bankAccount, Action.WITHDRAW, 1000));
+
+        for (Command c : commands) {
+            c.call();
+            System.out.println(bankAccount);
+        }
+
+        Collections.reverse(commands);
+
+        for (Command c : commands) {
+            c.undo();
+            System.out.println(bankAccount);
+        }
+    }
+}
+```
+
+</details>
