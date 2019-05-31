@@ -2578,3 +2578,6 @@ class Demo {
 ```
 
 </details>
+
+## Interpreter
+- Interpreter is a component that processes structured text data by turning it into separate lexical token (lexing) and then interpreting sequences of said tokens (parsing).
