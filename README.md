@@ -2712,3 +2712,154 @@ class Demo {
 ```
 
 </details>
+
+## Mediator
+- Mediator is a component that facilitates communication between other components without them necessarily being aware of each other or having direct (reference) access to each other.
+- Mediator has functions the components can call.
+- Components have functions the mediator can call.
+- Event processing libriries (e.g., [Reactive Extensions](https://github.com/ReactiveX/RxJava)) make communication easier to implement.
+
+<details>
+<summary>Chat Room</summary>
+
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+class Person {
+    public String name;  // assume name is unique
+    public ChatRoom room;
+    private List<String> chatLog = new ArrayList<>();
+
+    public Person(String name) {
+        this.name = name;
+    }
+
+    public void receive(String sender, String message) {
+        String s = sender + ": '" + message + "'";
+        System.out.println("[" + name + "'s chat session] " + s);
+        chatLog.add(s);
+    }
+
+    public void say(String message) {
+        room.broadcast(name, message);
+    }
+
+    public void privateMessage(String who, String message) {
+        room.message(name, who, message);
+    }
+}
+
+class ChatRoom {  // mediator
+    private List<Person> persons = new ArrayList<>();
+
+    public void broadcast(String source, String message) {
+        for (Person person : persons) {
+            if (!person.name.equals(source)) {
+                person.receive(source, message);
+            }
+        }
+    }
+
+    public void join(Person p) {
+        String joinMsg = p.name + " joins the chat";
+        broadcast("room", joinMsg);
+
+        p.room = this;
+        persons.add(p);
+    }
+
+    public void message(String source, String destination, String message) {
+        persons.stream()
+                .filter(p -> p.name.equals(destination))
+                .findFirst()
+                .ifPresent(person -> person.receive(source, message));
+    }
+}
+
+class ChatRoomDemo {
+    public static void main(String[] args) {
+        ChatRoom room = new ChatRoom();
+
+        Person john = new Person("John");
+        Person jane = new Person("Jane");
+
+        room.join(john); // no message here
+        room.join(jane);
+
+        john.say("hi room");
+        jane.say("oh, hey john");
+
+        Person simon = new Person("Simon");
+        room.join(simon);
+        simon.say("hi everyone!");
+
+        jane.privateMessage("Simon", "glad you could join us!");
+    }
+}
+```
+
+</details>
+
+<details>
+<summary>Reactive Extensions Event Broker</summary>
+
+```java
+import io.reactivex.Observable;
+import io.reactivex.Observer;
+
+import java.util.ArrayList;
+import java.util.List;
+
+class EventBroker extends Observable<Integer> {
+    private List<Observer<? super Integer>> observers = new ArrayList<>();
+
+    @Override
+    protected void subscribeActual(Observer<? super Integer> observer) {
+        observers.add(observer);
+    }
+
+    public void publish(int n) {
+        for (Observer<? super Integer> o : observers) {
+            o.onNext(n);
+        }
+    }
+}
+
+class FootballPlayer {
+    private int goalsScored = 0;
+    private EventBroker broker;
+    public String name;
+
+    public FootballPlayer(EventBroker broker, String name) {
+        this.broker = broker;
+        this.name = name;
+    }
+
+    public void score() {
+        broker.publish(++goalsScored);
+    }
+}
+
+class FootballCoach {
+    public FootballCoach(EventBroker broker) {
+        broker.subscribe(i -> {
+            System.out.println("Hey, you scored " + i + " goals!");
+        });
+    }
+}
+
+class RxEventBrokerDemo {
+    public static void main(String [] args) {
+        EventBroker broker = new EventBroker();
+        FootballPlayer player = new FootballPlayer(broker, "jones");
+        FootballCoach coach = new FootballCoach(broker);
+
+        player.score();
+        player.score();
+        player.score();
+    }
+}
+```
+
+</details>
