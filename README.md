@@ -2863,3 +2863,68 @@ class RxEventBrokerDemo {
 ```
 
 </details>
+
+## Memento
+- Memento is a token/handle representing the system state.
+- It allows you to roll back to the state when the token was generated.
+- It may or may not directly expose state information.
+- Memento can be used to implement undo/redo operations.
+- Memento should be inmutable.
+
+<details>
+<summary>Memento Example</summary>
+
+```java
+class Memento {
+    private int balance;
+
+    public Memento(int balance) {
+        this.balance = balance;
+    }
+
+    public int getBalance() {
+        return balance;
+    }
+}
+
+class BankAccount {
+    private int balance;
+
+    public BankAccount(int balance) {
+        this.balance = balance;
+    }
+
+    public Memento deposit(int amount) {
+        balance += amount;
+        return new Memento(balance);
+    }
+
+    public void restore(Memento m) {
+        balance = m.getBalance();
+    }
+
+    @Override
+    public String toString() {
+        return "BankAccount{balance=" + balance + "}";
+    }
+}
+
+class MementoDemo {
+    public static void main(String[] args) {
+        BankAccount ba = new BankAccount(100);
+        Memento m1 = ba.deposit(50); // 150
+        Memento m2 = ba.deposit(25); // 175
+        System.out.println(ba);
+
+        // restore to m1
+        ba.restore(m1);
+        System.out.println(ba);
+
+        // restore to m2
+        ba.restore(m2);
+        System.out.println(ba);
+    }
+}
+```
+
+</details>
