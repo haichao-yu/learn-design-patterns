@@ -3606,3 +3606,64 @@ class DynamicStrategyDemo {
 ```
 
 </details>
+
+## Template Method
+- Template Method allows us to define the "skeleton" of the algorithm, with concrete implementation defined in subclasses.
+- Step 1: Define the algorithm at a high level.
+- Step 2: Define constituent parts as abstract methods/properties.
+- Step 3: Inherit the algorithm class, providing necessary overrides.
+
+<details>
+<summary>Template Method Example</summary>
+
+```java
+abstract class Game {
+
+    public void run() {  // "skeleton"
+        start();
+        while (!haveWinner()) {
+            takeTurn();
+        }
+        System.out.println("Player " + getWinningPlayer() + " wins!");
+    }
+
+    protected abstract void start();
+
+    protected abstract boolean haveWinner();
+
+    protected abstract void takeTurn();
+
+    protected abstract int getWinningPlayer();
+}
+
+class Chess extends Game {
+    @Override
+    protected void start() {
+        // chess implementation
+    }
+
+    @Override
+    protected boolean haveWinner() {
+        // chess implementation
+    }
+
+    @Override
+    protected void takeTurn() {
+        // chess implementation
+    }
+
+    @Override
+    protected int getWinningPlayer() {
+        // chess implementation
+    }
+}
+
+class Demo {
+    public static void main(String[] args) {
+        Game chess = new Chess();
+        chess.run();
+    }
+}
+```
+
+</details>
