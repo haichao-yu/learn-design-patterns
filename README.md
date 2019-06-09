@@ -3667,3 +3667,406 @@ class Demo {
 ```
 
 </details>
+
+## Visitor
+- Visitor is a pattern where a component (visitor) is allowed to traverse the entire inheritance hierarchy and add functionality to each member.
+- It's typically implemented by propagating a single method throughout the entire hierarchy.
+- Step 1: Propagate an `accept(Visitor visitor)` method throughout the entire hierarchy.
+- Step 2: Create a visitor with `visit(Foo)`, `visit(Bar)`, etc for each element in the hierarchy.
+- Step 3: Each `accept()` simply call `visitor.visit(this)`.
+
+<details>
+<summary>Instrusive Visitor</summary>
+
+```java
+/**
+ * Intrusive Visitor: Jump into classes we've already written and already tested, and modify the entire hierarchy.
+ *
+ * - It violates the open-closed principle because it tries to change existing classes.
+ * - It violates the single responsibility principle because print is a separate concern.
+ *   (You might want to put all the printing for all the elements in the hierarchy into a separate class)
+ */
+
+abstract class Expression {
+    public abstract void print(StringBuilder sb);  // add print method here
+}
+
+class DoubleExpression extends Expression {
+    private double value;
+
+    public DoubleExpression(double value) {
+        this.value = value;
+    }
+
+    @Override
+    public void print(StringBuilder sb) {
+        sb.append(value);
+    }
+}
+
+class AdditionExpression extends Expression {
+    private Expression left, right;
+
+    public AdditionExpression(Expression left, Expression right) {
+        this.left = left;
+        this.right = right;
+    }
+
+    @Override
+    public void print(StringBuilder sb) {
+        sb.append("(");
+        left.print(sb);
+        sb.append("+");
+        right.print(sb);
+        sb.append(")");
+    }
+}
+
+class Demo {
+    public static void main(String[] args) {
+        // 1 + (2 + 3)
+        AdditionExpression e = new AdditionExpression(
+                new DoubleExpression(1),
+                new AdditionExpression(
+                        new DoubleExpression(2),
+                        new DoubleExpression(3)
+                )
+        );
+
+        StringBuilder sb = new StringBuilder();
+        e.print(sb);
+        System.out.println(sb);
+    }
+}
+```
+
+</details>
+
+<details>
+<summary>Reflective Visitor</summary>
+
+```java
+/**
+ * Reflective Visitor: Use reflection to figure out exactly what kind of expression we actually got.
+ */
+
+abstract class Expression {
+}
+
+class DoubleExpression extends Expression {
+    private double value;
+
+    public DoubleExpression(double value) {
+        this.value = value;
+    }
+
+    public double getValue() {
+        return value;
+    }
+}
+
+class AdditionExpression extends Expression {
+    private Expression left, right;
+
+    public AdditionExpression(Expression left, Expression right) {
+        this.left = left;
+        this.right = right;
+    }
+
+    public Expression getLeft() {
+        return left;
+    }
+
+    public Expression getRight() {
+        return right;
+    }
+}
+
+class ExpressionPrinter {
+    public static void print(Expression e, StringBuilder sb) {
+        if (e.getClass() == DoubleExpression.class) {  // issue: getClass() is slow
+            sb.append(((DoubleExpression) e).getValue());
+        }
+        else if (e.getClass() == AdditionExpression.class) {  // issue: getClass() is slow
+            AdditionExpression ae = (AdditionExpression) e;
+            sb.append("(");
+            print(ae.getLeft(), sb);
+            sb.append("+");
+            print(ae.getRight(), sb);
+            sb.append(")");
+        }
+        // issue: need to cover every component in hierarchy using if..else if..
+    }
+}
+
+class Demo {
+    public static void main(String[] args) {
+        // 1 + (2 + 3)
+        AdditionExpression e = new AdditionExpression(
+                new DoubleExpression(1),
+                new AdditionExpression(
+                        new DoubleExpression(2),
+                        new DoubleExpression(3)
+                )
+        );
+
+        StringBuilder sb = new StringBuilder();
+        ExpressionPrinter.print(e, sb);
+        System.out.println(sb);
+    }
+}
+```
+
+</details>
+
+<details>
+<summary>Classic Visitor (Double Dispatch)</summary>
+
+```java
+/**
+ * Classic Visitor: Intrude into the base expression class but we're only going to do it once.
+ *
+ * Downside: 
+ * The tight coupling between the expression and the visitors sometimes is not good.
+ * There is a cyclic dependency between the expression and the visitors.
+ * As soon as you start adding a new expression you end up implementing a new accept() which causes a new visit().
+ * However, sometimes you want more flexibility.
+ */
+
+interface ExpressionVisitor {
+    void visit(DoubleExpression de);
+    void visit(AdditionExpression ae);
+}
+
+abstract class Expression {
+    // We've propagated this accept() throughout the entire hierarchy, which means we can extend the entire hierarchy using any number of visitors.
+    public abstract void accept(ExpressionVisitor visitor);
+}
+
+class DoubleExpression extends Expression {
+    private double value;
+
+    public DoubleExpression(double value) {
+        this.value = value;
+    }
+
+    public double getValue() {
+        return value;
+    }
+
+    @Override
+    public void accept(ExpressionVisitor visitor) {
+        visitor.visit(this);
+    }
+}
+
+class AdditionExpression extends Expression {
+    private Expression left, right;
+
+    public AdditionExpression(Expression left, Expression right) {
+        this.left = left;
+        this.right = right;
+    }
+
+    public Expression getLeft() {
+        return left;
+    }
+
+    public Expression getRight() {
+        return right;
+    }
+
+    @Override
+    public void accept(ExpressionVisitor visitor) {
+        visitor.visit(this);
+    }
+}
+
+class ExpressionPrinter implements ExpressionVisitor {
+    private StringBuilder sb = new StringBuilder();
+
+    @Override
+    public void visit(DoubleExpression de) {
+        sb.append(de.getValue());
+    }
+
+    @Override
+    public void visit(AdditionExpression ae) {
+        sb.append("(");
+        ae.getLeft().accept(this);
+        sb.append("+");
+        ae.getRight().accept(this);
+        sb.append(")");
+    }
+
+    @Override
+    public String toString() {
+        return sb.toString();
+    }
+}
+
+// Add additional visitors is not a particular problem now
+class ExpressionCalculator implements ExpressionVisitor {
+    private double result;
+
+    @Override
+    public void visit(DoubleExpression de) {
+        result = de.getValue();
+    }
+
+    @Override
+    public void visit(AdditionExpression ae) {
+        ae.getLeft().accept(this);
+        double left = result;
+        ae.getRight().accept(this);
+        double right = result;
+        result = left + right;
+    }
+
+    public double getResult() {
+        return result;
+    }
+}
+
+class Demo {
+    public static void main(String[] args) {
+        // 1 + (2 + 3)
+        AdditionExpression e = new AdditionExpression(
+                new DoubleExpression(1),
+                new AdditionExpression(
+                        new DoubleExpression(2),
+                        new DoubleExpression(3)
+                )
+        );
+
+        ExpressionPrinter ep = new ExpressionPrinter();
+        ep.visit(e);
+        System.out.println(ep);
+
+        // 1 + (2 + 3) = 6
+        ExpressionCalculator ec = new ExpressionCalculator();
+        ec.visit(e);
+        System.out.println(ep + " = " + ec.getResult());
+    }
+}
+```
+
+</details>
+
+<details>
+<summary>Acyclic Visitor</summary>
+
+```java
+/**
+ * Acyclic Visitor: Visitor allows you additional amount of flexibility at the cost of performance.
+ */
+
+interface Visitor {
+    // marker interface
+}
+
+interface ExpressionVisitor extends Visitor {
+    void visit(Expression obj);
+}
+
+interface DoubleExpressionVisitor extends Visitor {
+    void visit(DoubleExpression obj);
+}
+
+interface AdditionExpressionVisitor extends Visitor {
+    void visit(AdditionExpression obj);
+}
+
+abstract class Expression {
+    public void accept(Visitor visitor) {
+        if (visitor instanceof ExpressionVisitor) {
+            ((ExpressionVisitor) visitor).visit(this);
+        }
+    }
+}
+
+class DoubleExpression extends Expression {
+    private double value;
+
+    public DoubleExpression(double value) {
+        this.value = value;
+    }
+
+    public double getValue() {
+        return value;
+    }
+
+    @Override
+    public void accept(Visitor visitor) {
+        if (visitor instanceof DoubleExpressionVisitor) {  // instanceof is slow
+            ((DoubleExpressionVisitor) visitor).visit(this);
+        }
+    }
+}
+
+class AdditionExpression extends Expression {
+    private Expression left, right;
+
+    public AdditionExpression(Expression left, Expression right) {
+        this.left = left;
+        this.right = right;
+    }
+
+    public Expression getLeft() {
+        return left;
+    }
+
+    public Expression getRight() {
+        return right;
+    }
+
+    @Override
+    public void accept(Visitor visitor) {
+        if (visitor instanceof AdditionExpressionVisitor) {
+            ((AdditionExpressionVisitor) visitor).visit(this);
+        }
+    }
+}
+
+class ExpressionPrinter implements DoubleExpressionVisitor, AdditionExpressionVisitor {
+    private StringBuilder sb = new StringBuilder();
+
+    @Override
+    public void visit(DoubleExpression de) {
+        sb.append(de.getValue());
+    }
+
+    @Override
+    public void visit(AdditionExpression ae) {
+        sb.append("(");
+        ae.getLeft().accept(this);
+        sb.append("+");
+        ae.getRight().accept(this);
+        sb.append(")");
+    }
+
+    @Override
+    public String toString() {
+        return sb.toString();
+    }
+}
+
+class Demo {
+    public static void main(String[] args) {
+        // 1 + (2 + 3)
+        AdditionExpression e = new AdditionExpression(
+                new DoubleExpression(1),
+                new AdditionExpression(
+                        new DoubleExpression(2),
+                        new DoubleExpression(3)
+                )
+        );
+
+        ExpressionPrinter ep = new ExpressionPrinter();
+        ep.visit(e);
+        System.out.println(ep);
+    }
+}
+```
+
+</details>
